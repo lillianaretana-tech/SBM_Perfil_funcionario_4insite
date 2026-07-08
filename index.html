@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perfil de Nuevo Funcionario | SBM</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-layout">
+      <img class="brand-logo" src="assets/Logo_SBM.png" alt="SBM">
+      <button id="adminOpenBtn" class="secondary-btn" type="button">Panel administrativo</button>
+    </div>
+  </header>
+
+  <main class="shell page-layout">
+    <section id="appAlert" class="alert hidden" role="alert"></section>
+
+    <section class="hero-panel">
+      <p class="eyebrow">Bienvenida SBM</p>
+      <h1>Queremos conocerte mejor</h1>
+      <p>
+        Nos alegra que estes iniciando esta nueva etapa con SBM. Para darte una bienvenida mas cercana y conocer un poco de ti como persona, te agradecemos completar este breve perfil mediante el enlace que recibiste.
+      </p>
+      <p>
+        La informacion que compartas nos ayudara a saber mas sobre tus intereses, tu entorno y aquello que te gusta hacer fuera del trabajo. No tomara mucho tiempo y sera una forma valiosa de comenzar a acompanarte mejor desde el primer dia.
+      </p>
+    </section>
+
+    <section class="form-panel" aria-labelledby="formTitle">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Perfil personal</p>
+          <h2 id="formTitle">Cuéntanos sobre ti</h2>
+        </div>
+      </div>
+
+      <form id="profileForm" class="profile-form">
+        <label>
+          Nombre completo
+          <input id="fullName" name="fullName" type="text" autocomplete="name" required>
+        </label>
+
+        <label>
+          Numero de cedula
+          <input id="cedula" name="cedula" type="text" inputmode="text" autocomplete="off" required>
+        </label>
+
+        <label class="wide-field">
+          Sobre mi
+          <textarea id="aboutMe" name="aboutMe" rows="4" placeholder="Cuentanos quien eres, que te identifica o que te gustaria que sepamos de ti." required></textarea>
+        </label>
+
+        <label class="wide-field">
+          Que te gusta hacer en tu tiempo libre
+          <textarea id="freeTime" name="freeTime" rows="4" placeholder="Ej. caminar, cocinar, practicar deporte, leer, compartir con amistades, musica, voluntariado..."></textarea>
+        </label>
+
+        <label class="wide-field">
+          Tu entorno familiar
+          <textarea id="family" name="family" rows="4" placeholder="Cuentanos con quien vives, quienes forman parte importante de tu familia o si tienes mascotas."></textarea>
+        </label>
+
+        <label class="wide-field">
+          Intereses en la vida
+          <textarea id="interests" name="interests" rows="4" placeholder="Que temas te interesan, que metas tienes o que cosas disfrutas aprender o hacer."></textarea>
+        </label>
+
+        <label class="wide-field">
+          Viajes o lugares especiales
+          <textarea id="travel" name="travel" rows="4" placeholder="Has viajado a algun lugar que recuerdes con carino? Hay algun destino que te gustaria conocer?"></textarea>
+        </label>
+
+        <label class="wide-field">
+          Algo mas que quisieras compartir
+          <textarea id="additionalNotes" name="additionalNotes" rows="4" placeholder="Este espacio es libre. Puedes contarnos algo que te gustaria que SBM sepa de ti."></textarea>
+        </label>
+
+        <button id="submitBtn" class="primary-btn wide-field" type="submit">Enviar mi perfil</button>
+      </form>
+    </section>
+
+    <section id="successPanel" class="success-panel hidden" aria-live="polite">
+      <strong>Gracias por compartir tu perfil.</strong>
+      <p>Tu informacion fue recibida correctamente. Nos alegra conocerte un poco mas y darte la bienvenida a SBM.</p>
+    </section>
+  </main>
+
+  <div id="adminModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+    <div class="modal-panel">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Administracion</p>
+          <h2 id="adminTitle">Perfiles recibidos</h2>
+        </div>
+        <button id="adminCloseBtn" class="icon-btn" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <form id="adminPinForm" class="pin-form">
+        <label>
+          Codigo de acceso
+          <input id="adminPin" type="password" inputmode="numeric" autocomplete="off" required>
+        </label>
+        <button class="primary-btn" type="submit">Entrar</button>
+      </form>
+
+      <section id="adminContent" class="admin-content hidden">
+        <div class="admin-summary">
+          <div>
+            <span id="totalProfiles">0</span>
+            <p>Perfiles recibidos</p>
+          </div>
+          <button id="exportCsvBtn" class="secondary-btn" type="button">Exportar CSV</button>
+        </div>
+
+        <label>
+          Buscar por nombre o cedula
+          <input id="adminSearch" type="search" placeholder="Buscar perfil">
+        </label>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Nombre</th>
+                <th>Cedula</th>
+                <th>Sobre mi</th>
+                <th>Tiempo libre</th>
+                <th>Familia</th>
+                <th>Intereses</th>
+                <th>Viajes</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody id="adminRows"></tbody>
+          </table>
+        </div>
+        <p id="adminEmpty" class="muted hidden">No hay perfiles con ese filtro.</p>
+      </section>
+    </div>
+  </div>
+</body>
+</html>
