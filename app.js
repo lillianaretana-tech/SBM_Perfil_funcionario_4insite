@@ -37,7 +37,7 @@ function cacheDom() {
     adminPin: document.getElementById("adminPin"),
     adminContent: document.getElementById("adminContent"),
     totalProfiles: document.getElementById("totalProfiles"),
-    exportCsvBtn: document.getElementById("exportCsvBtn"),
+    exportExcelBtn: document.getElementById("exportExcelBtn"),
     adminSearch: document.getElementById("adminSearch"),
     adminRows: document.getElementById("adminRows"),
     adminEmpty: document.getElementById("adminEmpty")
@@ -53,7 +53,7 @@ function bindEvents() {
   });
   dom.adminPinForm.addEventListener("submit", unlockAdmin);
   dom.adminSearch.addEventListener("input", renderAdminRows);
-  dom.exportCsvBtn.addEventListener("click", exportCsv);
+  dom.exportExcelBtn.addEventListener("click", exportExcel);
 }
 
 function initSupabase() {
@@ -172,28 +172,150 @@ function renderAdminRows() {
   dom.adminEmpty.classList.toggle("hidden", rows.length > 0);
 }
 
-function exportCsv() {
+async function exportExcel() {
   const rows = getFilteredProfiles();
-  const header = ["fecha", "nombre", "cedula", "sobre_mi", "tiempo_libre", "familia", "intereses", "viajes", "notas"];
-  const body = rows.map((profile) => [
-    formatDate(profile.created_at),
-    profile.full_name || "",
-    profile.cedula || "",
-    profile.about_me || "",
-    profile.free_time || "",
-    profile.family_environment || "",
-    profile.life_interests || "",
-    profile.travel_experience || "",
-    profile.additional_notes || ""
-  ]);
-  const csv = [header, ...body].map((line) => line.map(csvCell).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `sbm-perfiles-nuevos-funcionarios-${new Date().toISOString().slice(0, 10)}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+  if (!rows.length) {
+    showAlert("No hay perfiles disponibles con el filtro actual para exportar.");
+    return;
+  }
+  if (!window.ExcelJS) {
+    showAlert("No se pudo cargar el generador de Excel. Revise la conexion a internet e intente de nuevo.");
+    return;
+  }
+
+  clearAlert();
+  setExportBusy(true);
+
+  try {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "SBM Management";
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    const sheet = workbook.addWorksheet("Perfiles", {
+      views: [{ state: "frozen", ySplit: 4 }],
+      pageSetup: {
+        orientation: "landscape",
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        paperSize: 9,
+        margins: { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 }
+      }
+    });
+
+    const columnCount = 9;
+    sheet.mergeCells(1, 1, 1, columnCount);
+    const title = sheet.getCell("A1");
+    title.value = "SBM | Perfiles de nuevos funcionarios";
+    title.font = { name: "Arial", size: 18, bold: true, color: { argb: "FFFFFFFF" } };
+    title.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF262B2F" } };
+    title.alignment = { vertical: "middle", horizontal: "left" };
+    sheet.getRow(1).height = 34;
+
+    sheet.mergeCells(2, 1, 2, columnCount);
+    const subtitle = sheet.getCell("A2");
+    const filterText = dom.adminSearch.value.trim();
+    subtitle.value = `Reporte generado: ${formatDate(new Date())} | Registros: ${rows.length}${filterText ? ` | Filtro: ${filterText}` : ""}`;
+    subtitle.font = { name: "Arial", size: 10, italic: true, color: { argb: "FF5F6971" } };
+    subtitle.alignment = { vertical: "middle", horizontal: "left" };
+    sheet.getRow(2).height = 22;
+    sheet.getRow(3).height = 8;
+
+    const headers = [
+      "Fecha de registro", "Nombre completo", "Número de cédula", "Sobre mí",
+      "Tiempo libre", "Entorno familiar", "Intereses en la vida",
+      "Viajes o lugares especiales", "Información adicional"
+    ];
+    const headerRow = sheet.getRow(4);
+    headerRow.values = headers;
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.font = { name: "Arial", size: 10, bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD8642A" } };
+      cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF9F4B24" } },
+        left: { style: "thin", color: { argb: "FF9F4B24" } },
+        bottom: { style: "thin", color: { argb: "FF9F4B24" } },
+        right: { style: "thin", color: { argb: "FF9F4B24" } }
+      };
+    });
+
+    rows.forEach((profile, index) => {
+      const createdAt = profile.created_at ? new Date(profile.created_at) : "";
+      const row = sheet.addRow([
+        createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt : "",
+        profile.full_name || "",
+        String(profile.cedula || ""),
+        profile.about_me || "",
+        profile.free_time || "",
+        profile.family_environment || "",
+        profile.life_interests || "",
+        profile.travel_experience || "",
+        profile.additional_notes || ""
+      ]);
+      row.height = 54;
+      row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+        cell.font = { name: "Arial", size: 10, color: { argb: "FF262B2F" } };
+        cell.alignment = {
+          vertical: "top",
+          horizontal: columnNumber <= 3 ? "left" : "justify",
+          wrapText: true
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: index % 2 === 0 ? "FFFFFFFF" : "FFF7F8F8" }
+        };
+        cell.border = {
+          bottom: { style: "hair", color: { argb: "FFD9DDDF" } },
+          right: { style: "hair", color: { argb: "FFE7E9EA" } }
+        };
+      });
+      row.getCell(1).numFmt = "dd/mm/yyyy hh:mm";
+      row.getCell(3).numFmt = "@";
+    });
+
+    const widths = [20, 30, 20, 45, 40, 40, 40, 40, 40];
+    sheet.columns.forEach((column, index) => {
+      column.width = widths[index];
+    });
+    sheet.autoFilter = { from: "A4", to: `I${sheet.rowCount}` };
+    sheet.properties.defaultRowHeight = 18;
+    sheet.headerFooter.oddFooter = "&LSBM Management&CPerfil de nuevos funcionarios&RPágina &P de &N";
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `SBM_Perfiles_Funcionarios_${localDateStamp()}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    console.error(error);
+    showAlert("No se pudo generar el archivo Excel. Intente nuevamente.");
+  } finally {
+    setExportBusy(false);
+  }
+}
+
+function setExportBusy(isBusy) {
+  dom.exportExcelBtn.disabled = isBusy;
+  dom.exportExcelBtn.textContent = isBusy ? "Generando Excel..." : "Descargar Excel";
+}
+
+function localDateStamp() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function setBusy(isBusy) {
@@ -228,10 +350,6 @@ function formatDate(value) {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(value));
-}
-
-function csvCell(value) {
-  return `"${String(value ?? "").replaceAll('"', '""')}"`;
 }
 
 function escapeHtml(value) {

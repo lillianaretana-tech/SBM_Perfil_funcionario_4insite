@@ -6,7 +6,7 @@ Formulario publico para conocer mejor a cada funcionario nuevo de SBM. Usa HTML,
 
 - `index.html`: formulario y panel administrativo.
 - `styles.css`: diseno mobile-first con logo y colores SBM.
-- `app.js`: conexion Supabase, guardado de perfiles, panel admin y CSV.
+- `app.js`: conexion Supabase, guardado de perfiles, panel admin y exportacion profesional a Excel.
 - `supabase_setup.sql`: tabla `sbm_new_employee_profiles`, trigger `updated_at`, RLS y policies.
 - `assets/Logo_SBM.png`: logo SBM.
 
@@ -35,6 +35,6 @@ PIN temporal:
 const ADMIN_PIN = "2580";
 ```
 
-Permite ver perfiles recibidos, buscar por nombre/cedula y exportar CSV.
+Permite ver perfiles recibidos, buscar por nombre/cedula y descargar un archivo Excel profesional. La exportacion respeta el filtro activo e incluye encabezado institucional, filtros de columnas, fila fija, textos ajustados y formato de impresion horizontal.
 
 Nota: este PIN local no es seguridad fuerte. Para acceso privado real conviene implementar autenticacion Supabase.

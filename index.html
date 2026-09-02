@@ -6,6 +6,7 @@
   <title>Perfil de Nuevo Funcionario | SBM</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -113,7 +114,7 @@
             <span id="totalProfiles">0</span>
             <p>Perfiles recibidos</p>
           </div>
-          <button id="exportCsvBtn" class="secondary-btn" type="button">Exportar CSV</button>
+          <button id="exportExcelBtn" class="secondary-btn" type="button">Descargar Excel</button>
         </div>
 
         <label>
