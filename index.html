@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=2" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -100,10 +100,14 @@
         <button id="adminCloseBtn" class="icon-btn" type="button" aria-label="Cerrar">x</button>
       </div>
 
+      <p id="adminStatus" role="alert"></p>
       <form id="adminPinForm" class="pin-form">
         <label>
-          Codigo de acceso
-          <input id="adminPin" type="password" inputmode="numeric" autocomplete="off" required>
+          Correo corporativo
+          <input id="adminEmail" type="email" autocomplete="username" required>
+        </label>
+        <label>Contraseña
+          <input id="adminPin" type="password" autocomplete="current-password" required>
         </label>
         <button class="primary-btn" type="submit">Entrar</button>
       </form>
@@ -114,6 +118,7 @@
             <span id="totalProfiles">0</span>
             <p>Perfiles recibidos</p>
           </div>
+          <button id="logoutBtn" class="secondary-btn" type="button">Cerrar sesión</button>
           <button id="exportExcelBtn" class="secondary-btn" type="button">Descargar Excel</button>
         </div>
 

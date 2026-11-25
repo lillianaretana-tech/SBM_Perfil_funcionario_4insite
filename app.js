@@ -1,6 +1,6 @@
 const SUPABASE_URL = "https://vgkyoyosjewdygxtnqvu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZna3lveW9zamV3ZHlneHRucXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NTAxNDAsImV4cCI6MjA5ODIyNjE0MH0.oDxSWg61UFLqMh2MeEW6yxarZAjobhEA6TWm0KS_7CA";
-const ADMIN_PIN = "2580";
+const ADMIN_ID = "6da021b7-c47f-4eda-bd92-c97f7c957720";
 
 const state = {
   supabase: null,
@@ -54,6 +54,11 @@ function bindEvents() {
   dom.adminPinForm.addEventListener("submit", unlockAdmin);
   dom.adminSearch.addEventListener("input", renderAdminRows);
   dom.exportExcelBtn.addEventListener("click", exportExcel);
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    state.adminAuthenticated = false; state.profiles = []; dom.adminRows.innerHTML = ''; dom.totalProfiles.textContent = '0';
+    dom.adminContent.classList.add('hidden'); dom.adminPinForm.classList.remove('hidden');
+    await state.supabase.auth.signOut();
+  });
 }
 
 function initSupabase() {
@@ -89,11 +94,11 @@ async function submitProfile(event) {
   setBusy(true);
   const { error } = await state.supabase
     .from("sbm_new_employee_profiles")
-    .upsert(payload, { onConflict: "cedula" });
+    .insert(payload);
   setBusy(false);
 
   if (error) {
-    showAlert(`No se pudo guardar el perfil: ${error.message}`);
+    showAlert(error.code === "23505" ? "Ya existe un perfil con esta cédula. Contacte a administración." : "No se pudo guardar el perfil. Intente nuevamente.");
     return;
   }
 
@@ -114,13 +119,18 @@ function closeAdmin() {
 
 async function unlockAdmin(event) {
   event.preventDefault();
-  if (dom.adminPin.value !== ADMIN_PIN) {
-    showAlert("Codigo administrativo incorrecto.");
+  if (!requireSupabase()) return;
+  const {data,error} = await state.supabase.auth.signInWithPassword({email: document.getElementById('adminEmail').value.trim(), password: dom.adminPin.value});
+  dom.adminPin.value = '';
+  if (error || data.user?.id !== ADMIN_ID) {
+    await state.supabase.auth.signOut();
+    document.getElementById('adminStatus').textContent = 'Acceso no autorizado o credenciales incorrectas.';
     return;
   }
+  document.getElementById('adminStatus').textContent = '';
   state.adminAuthenticated = true;
-  dom.adminPinForm.classList.add("hidden");
-  dom.adminContent.classList.remove("hidden");
+  dom.adminPinForm.classList.add('hidden');
+  dom.adminContent.classList.remove('hidden');
   await loadProfiles();
 }
 
@@ -132,7 +142,8 @@ async function loadProfiles() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    showAlert(`No se pudieron cargar los perfiles: ${error.message}`);
+    state.profiles = []; renderAdminRows(); dom.totalProfiles.textContent = "0";
+    document.getElementById("adminStatus").textContent = "No se pudieron cargar los perfiles. Inicie sesión nuevamente.";
     return;
   }
 
